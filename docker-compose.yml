@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  hugo:
+    build: ./hugo
+    ports:
+      - "1313:1313"
+    networks:
+      - mynetwork
+
+
+  proxy:
+    build: ./proxy
+    ports:
+      - "8080:8080"
+    depends_on:
+      - hugo
+    networks:
+      - mynetwork
+
+
+networks:
+  mynetwork:
+    driver : bridge
