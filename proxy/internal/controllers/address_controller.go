@@ -1,11 +1,10 @@
 package controllers
 
-
 import (
+	"encoding/json"
 	"geo-controller/proxy/internal/models"
 	"geo-controller/proxy/internal/responder"
 	"geo-controller/proxy/internal/service"
-	"encoding/json"
 	"net/http"
 )
 
@@ -52,4 +51,3 @@ func (c *AddressController) GeocodeHandler(w http.ResponseWriter, r *http.Reques
 
 	c.responder.OutputJSON(w, geocodeResp)
 }
-

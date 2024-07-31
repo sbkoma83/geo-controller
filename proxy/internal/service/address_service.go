@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"geo-controller/proxy/internal/models"
-
 	"net/http"
 
 	"github.com/ekomobile/dadata/v2"
@@ -60,6 +60,10 @@ func (s *AddressService) SearchAddress(query string) (*models.SearchResponse, er
 }
 
 func (s *AddressService) Geocode(request models.GeocodeRequest) (*models.GeocodeResponse, error) {
+	if request.Lat == "" || request.Lng == "" {
+		return nil, errors.New("latitude and longitude cannot be empty")
+	}
+
 	requestData := map[string]string{
 		"lat": request.Lat,
 		"lon": request.Lng,
