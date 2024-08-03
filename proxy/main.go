@@ -14,6 +14,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/jwtauth"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -40,12 +42,18 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func setupRouter() *chi.Mux {
+// func setupRouter() *chi.Mux {
+
+// 	return r
+
+// }
+
+func main() {
 	r := chi.NewRouter()
 	r.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:1313"},
-		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}).Handler)
@@ -77,17 +85,18 @@ func setupRouter() *chi.Mux {
 	r.Get("/api/users/list", authController.ListHandler)
 	r.Post("/api/users/update/{id}", authController.UpdateByID)
 	r.Delete("/api/users/delete/{id}", authController.DeleteByID)
-	return r
 
-}
-
-func main() {
-	r := setupRouter()
 	fmt.Println("Starting server on port 8080...")
 	http.ListenAndServe(":8080", r)
 
 }
 func initDB() {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 	dbUser := os.Getenv("DB_USER")
