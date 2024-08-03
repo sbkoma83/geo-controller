@@ -17,7 +17,14 @@ services:
     networks:
       - mynetwork
 
-
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
 networks:
   mynetwork:
     driver : bridge
