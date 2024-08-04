@@ -2,9 +2,9 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"geo-controller/proxy/internal/controllers"
+	"geo-controller/proxy/internal/models"
 	"geo-controller/proxy/internal/repositories"
 	"geo-controller/proxy/internal/service"
 	"log"
@@ -18,10 +18,12 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/rs/cors"
 	httpSwagger "github.com/swaggo/http-swagger"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var tokenAuth *jwtauth.JWTAuth
-var db *sql.DB
+var db *gorm.DB
 
 func init() {
 	tokenAuth = jwtauth.New("HS256", []byte("secret"), nil)
@@ -42,13 +44,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// func setupRouter() *chi.Mux {
-
-// 	return r
-
-// }
-
-func main() {
+func setupRouter() *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
@@ -86,6 +82,11 @@ func main() {
 	r.Post("/api/users/update/{id}", authController.UpdateByID)
 	r.Delete("/api/users/delete/{id}", authController.DeleteByID)
 
+	return r
+}
+
+func main() {
+	r := setupRouter()
 	fmt.Println("Starting server on port 8080...")
 	http.ListenAndServe(":8080", r)
 
@@ -103,36 +104,15 @@ func initDB() {
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
 
-	// Формируем строку подключения
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbHost, dbPort, dbUser, dbPassword, dbName)
-
-	// Открываем соединение с базой данных
-	db, err := sql.Open("postgres", connStr)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Europe/Moscow",
+		dbHost, dbUser, dbPassword, dbName, dbPort)
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to open database: %v", err)
+		log.Fatal("failed to connect database")
 	}
-	defer db.Close()
-
-	// Проверяем соединение
-	err = db.Ping()
+	err = db.AutoMigrate(&models.User{})
 	if err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
+		log.Fatal("failed to migrate models")
 	}
 
-	log.Println("Successfully connected to the database")
-
-	// Создаем таблицу users
-	_, err = db.Exec(`
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(255) NOT NULL,
-            password VARCHAR(255) NOT NULL
-        )
-    `)
-	if err != nil {
-		log.Fatalf("Failed to create users table: %v", err)
-	}
-
-	log.Println("Users table created or already exists")
 }

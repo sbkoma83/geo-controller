@@ -5,8 +5,9 @@ import (
 	"errors"
 	"geo-controller/proxy/internal/models"
 	"geo-controller/proxy/internal/repositories"
-	"golang.org/x/crypto/bcrypt"
 	"log"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthService struct {
@@ -29,7 +30,6 @@ func (s *AuthService) RegisterUser(username, password string) error {
 		return err
 	}
 	u := models.User{Username: username, Password: string(hashedPassword)}
-
 	err = s.usersRepo.Create(context.Background(), u)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (s *AuthService) ListUsers() (*[]models.User, error) {
 	}
 	return &users, nil
 }
-func (s *AuthService) GetByID(id int) (models.User, error) {
+func (s *AuthService) GetByID(id uint32) (models.User, error) {
 	user, err := s.usersRepo.GetByID(context.Background(), id)
 	if err != nil {
 		return models.User{}, err
@@ -67,7 +67,7 @@ func (s *AuthService) UpdateUser(user models.User) error {
 	}
 	return nil
 }
-func (s *AuthService) DeleteByID(id int) error {
+func (s *AuthService) DeleteByID(id uint32) error {
 	err := s.usersRepo.Delete(context.Background(), id)
 	if err != nil {
 		return err

@@ -1,9 +1,9 @@
 package models
 
 type User struct {
-	ID       int    `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	ID       uint32 `gorm:"primaryKey;column:id" json:"id"`
+	Username string `gorm:"column:username" json:"username"`
+	Password string `gorm:"column:password" json:"password"`
 }
 
 // Address содержит информацию об адресе.

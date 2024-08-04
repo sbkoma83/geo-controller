@@ -5,10 +5,11 @@ import (
 	"geo-controller/proxy/internal/models"
 	"geo-controller/proxy/internal/responder"
 	"geo-controller/proxy/internal/service"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/jwtauth"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/jwtauth"
 )
 
 type AuthController struct {
@@ -39,6 +40,7 @@ func (c *AuthController) RegisterHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("User registered"))
 }
 
 func (c *AuthController) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -76,7 +78,7 @@ func (c *AuthController) GetByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
 	}
-	user, err := c.authService.GetByID(id)
+	user, err := c.authService.GetByID(uint32(id))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -92,7 +94,7 @@ func (c *AuthController) UpdateByID(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	user.ID = id
+	user.ID = uint32(id)
 	err = c.authService.UpdateUser(user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -105,7 +107,7 @@ func (c *AuthController) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	err = c.authService.DeleteByID(id)
+	err = c.authService.DeleteByID(uint32(id))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
