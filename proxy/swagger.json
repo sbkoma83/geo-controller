@@ -7,7 +7,9 @@
   },
   "host": "localhost:8080",
   "basePath": "/api",
-  "schemes": ["http"],
+  "schemes": [
+    "http"
+  ],
   "securityDefinitions": {
     "BearerAuth": {
       "type": "apiKey",
@@ -18,10 +20,17 @@
   "paths": {
     "/register": {
       "post": {
+        "tags": [
+          "users"
+        ],
         "summary": "Register a new user",
         "description": "",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
         "parameters": [
           {
             "in": "body",
@@ -45,10 +54,17 @@
     },
     "/login": {
       "post": {
+        "tags": [
+          "users"
+        ],
         "summary": "Login a user",
         "description": "",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
         "parameters": [
           {
             "in": "body",
@@ -72,12 +88,140 @@
         }
       }
     },
+    "/users/{id}": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Get user by ID",
+        "description": "Retrieves a user's information based on their ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string",
+            "description": "The ID of the user to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/users/list": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "List all users",
+        "description": "Retrieves a list of all users",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/users/update/{id}": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Update user by ID",
+        "description": "Updates a user's information based on their ID",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserCredentials"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string",
+            "description": "The ID of the user to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/users/delete/{id}": {
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Delete user by ID",
+        "description": "Deletes a user based on their ID",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "string",
+            "description": "The ID of the user to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted successfully"
+          },
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/address/search": {
       "post": {
+        "tags": [
+          "search/geo"
+        ],
         "summary": "Search for addresses",
         "description": "",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
         "security": [
           {
             "BearerAuth": []
@@ -111,10 +255,17 @@
     },
     "/address/geocode": {
       "post": {
+        "tags": [
+          "search/geo"
+        ],
         "summary": "Geocode an address",
         "description": "",
-        "consumes": ["application/json"],
-        "produces": ["application/json"],
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
         "security": [
           {
             "BearerAuth": []
@@ -150,7 +301,10 @@
   "definitions": {
     "UserCredentials": {
       "type": "object",
-      "required": ["username", "password"],
+      "required": [
+        "username",
+        "password"
+      ],
       "properties": {
         "username": {
           "type": "string"
@@ -170,7 +324,9 @@
     },
     "SearchRequest": {
       "type": "object",
-      "required": ["query"],
+      "required": [
+        "query"
+      ],
       "properties": {
         "query": {
           "type": "string"
@@ -190,7 +346,10 @@
     },
     "GeocodeRequest": {
       "type": "object",
-      "required": ["lat", "lng"],
+      "required": [
+        "lat",
+        "lng"
+      ],
       "properties": {
         "lat": {
           "type": "string"
@@ -253,4 +412,3 @@
     }
   }
 }
-
