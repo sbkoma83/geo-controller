@@ -16,12 +16,14 @@ import (
 type AddressService struct {
 	daDataApiKey    string
 	daDataSecretKey string
+	DaDataURL       string
 }
 
 func NewAddressService(apiKey, secretKey string) *AddressService {
 	return &AddressService{
 		daDataApiKey:    apiKey,
 		daDataSecretKey: secretKey,
+		DaDataURL:       "http://suggestions.dadata.ru/suggestions/api/4_1/rs",
 	}
 }
 

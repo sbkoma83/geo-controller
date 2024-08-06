@@ -1,55 +1,136 @@
-package service
+package service_test
 
 import (
+	"context"
+	"geo-controller/proxy/internal/models"
+	"geo-controller/proxy/internal/service"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func TestAuthService_RegisterAndAuthenticate(t *testing.T) {
-	authService := NewAuthService()
-
-	// Test user registration
-	username := "testuser"
-	password := "testpassword"
-	err := authService.RegisterUser(username, password)
-	if err != nil {
-		t.Errorf("Failed to register user: %v", err)
-	}
-
-	// Test successful authentication
-	if !authService.AuthenticateUser(username, password) {
-		t.Error("Authentication failed for valid credentials")
-	}
-
-	// Test failed authentication
-	if authService.AuthenticateUser(username, "wrongpassword") {
-		t.Error("Authentication succeeded for invalid credentials")
-	}
-
-	// Test registering duplicate user
-	err = authService.RegisterUser(username, "anotherpassword")
-	if err == nil {
-		t.Error("Expected error when registering duplicate user, but got nil")
-	}
+type MockUserRepository struct {
+	mock.Mock
 }
 
-func TestAuthService_AuthenticateUser_EmptyFields(t *testing.T) {
-	authService := NewAuthService()
+func (m *MockUserRepository) Create(ctx context.Context, user models.User) error {
+	args := m.Called(ctx, user)
+	return args.Error(0)
+}
 
-	// Регистрация пользователя для теста
-	username := "testuser"
-	password := "testpassword"
-	err := authService.RegisterUser(username, password)
-	if err != nil {
-		t.Fatalf("Failed to register user: %v", err)
+func (m *MockUserRepository) GetByUsername(ctx context.Context, username string) (models.User, error) {
+	args := m.Called(ctx, username)
+	return args.Get(0).(models.User), args.Error(1)
+}
+
+func (m *MockUserRepository) GetByID(ctx context.Context, id uint32) (models.User, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(models.User), args.Error(1)
+}
+
+func (m *MockUserRepository) Update(ctx context.Context, user models.User) error {
+	args := m.Called(ctx, user)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) Delete(ctx context.Context, id uint32) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *MockUserRepository) List(ctx context.Context) ([]models.User, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]models.User), args.Error(1)
+}
+
+func TestAuthService_RegisterUser(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	svc := service.NewAuthService(mockRepo)
+
+	mockRepo.On("GetByUsername", mock.Anything, "testuser").Return(models.User{}, nil)
+	mockRepo.On("Create", mock.Anything, mock.Anything).Return(nil)
+
+	err := svc.RegisterUser("testuser", "testpassword")
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+
+func TestAuthService_AuthenticateUser(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	svc := service.NewAuthService(mockRepo)
+
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("testpassword"), bcrypt.DefaultCost)
+	mockUser := models.User{
+		Username: "testuser",
+		Password: string(hashedPassword),
 	}
 
-	// Попытка аутентификации с пустым именем пользователя
-	if authService.AuthenticateUser("", password) {
-		t.Error("Expected authentication to fail with empty username, but it succeeded")
+	mockRepo.On("GetByUsername", mock.Anything, "testuser").Return(mockUser, nil)
+
+	authenticated := svc.AuthenticateUser("testuser", "testpassword")
+	assert.True(t, authenticated)
+	mockRepo.AssertExpectations(t)
+}
+func TestAuthService_GetByID(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	svc := service.NewAuthService(mockRepo)
+
+	mockUser := models.User{
+		ID:       1,
+		Username: "testuser",
+		Password: "hashedpassword",
 	}
 
-	// Попытка аутентификации с пустым паролем
-	if authService.AuthenticateUser(username, "") {
-		t.Error("Expected authentication to fail with empty password, but it succeeded")
+	mockRepo.On("GetByID", mock.Anything, uint32(1)).Return(mockUser, nil)
+
+	user, err := svc.GetByID(1)
+	assert.NoError(t, err)
+	assert.Equal(t, mockUser, user)
+	mockRepo.AssertExpectations(t)
+}
+func TestAuthService_ListUsers(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	svc := service.NewAuthService(mockRepo)
+
+	mockUsers := []models.User{
+		{ID: 1, Username: "user1", Password: "hashedpassword1"},
+		{ID: 2, Username: "user2", Password: "hashedpassword2"},
+		{ID: 3, Username: "user3", Password: "hashedpassword3"},
 	}
+
+	mockRepo.On("List", mock.Anything).Return(mockUsers, nil)
+
+	users, err := svc.ListUsers()
+	assert.NoError(t, err)
+	assert.Equal(t, &mockUsers, users)
+	assert.Len(t, *users, 3)
+	mockRepo.AssertExpectations(t)
+}
+func TestAuthService_UpdateUser(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	svc := service.NewAuthService(mockRepo)
+
+	mockUser := models.User{
+		ID:       1,
+		Username: "testuser",
+		Password: "newhashedpassword",
+	}
+
+	mockRepo.On("Update", mock.Anything, mockUser).Return(nil)
+
+	err := svc.UpdateUser(mockUser)
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+func TestAuthService_DeleteByID(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	svc := service.NewAuthService(mockRepo)
+
+	mockRepo.On("Delete", mock.Anything, uint32(1)).Return(nil)
+
+	err := svc.DeleteByID(1)
+	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
 }
