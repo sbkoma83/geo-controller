@@ -2,6 +2,7 @@ package service_test
 
 import (
 	"context"
+	"errors"
 	"geo-controller/proxy/internal/models"
 	"geo-controller/proxy/internal/service"
 	"testing"
@@ -132,5 +133,34 @@ func TestAuthService_DeleteByID(t *testing.T) {
 
 	err := svc.DeleteByID(1)
 	assert.NoError(t, err)
+	mockRepo.AssertExpectations(t)
+}
+func TestAuthService_RegisterUser_ExistingUsername(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	svc := service.NewAuthService(mockRepo)
+
+	existingUser := models.User{
+		Username: "existinguser",
+		Password: "hashedpassword",
+	}
+
+	mockRepo.On("GetByUsername", mock.Anything, "existinguser").Return(existingUser, nil)
+
+	err := svc.RegisterUser("existinguser", "newpassword")
+
+	assert.Error(t, err)
+	assert.Equal(t, "username exists", err.Error())
+	mockRepo.AssertExpectations(t)
+}
+func TestAuthService_GetByID_NotFound(t *testing.T) {
+	mockRepo := new(MockUserRepository)
+	svc := service.NewAuthService(mockRepo)
+
+	mockRepo.On("GetByID", mock.Anything, uint32(1)).Return(models.User{}, errors.New("user not found"))
+
+	user, err := svc.GetByID(1)
+	assert.Error(t, err)
+	assert.Equal(t, "user not found", err.Error())
+	assert.Equal(t, models.User{}, user)
 	mockRepo.AssertExpectations(t)
 }

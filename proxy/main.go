@@ -91,6 +91,7 @@ func main() {
 	http.ListenAndServe(":8080", r)
 
 }
+
 func initDB() {
 
 	err := godotenv.Load()

@@ -1,3 +1,4 @@
+// auth_controller_test.go
 package controllers
 
 import (
@@ -331,4 +332,67 @@ func TestAuthController_UpdateByID(t *testing.T) {
 	}
 
 	mockRepo.AssertExpectations(t)
+}
+func TestAuthController_DeleteByID(t *testing.T) {
+	authController, mockRepo := newMockAuthController()
+
+	// Mock repository behavior
+	mockRepo.On("Delete", mock.Anything, uint32(1)).Return(nil)
+
+	// Create request
+	req, err := http.NewRequest("DELETE", "/api/users/delete/1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+
+	// Create a new router and register the DeleteByID handler
+	r := chi.NewRouter()
+	r.Delete("/api/users/delete/{id}", authController.DeleteByID)
+
+	// Serve the request
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	// Check the response body
+	expectedBody := "User deleted"
+	if rr.Body.String() != expectedBody {
+		t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expectedBody)
+	}
+
+	mockRepo.AssertExpectations(t)
+}
+func TestAuthController_RegisterHandler_InvalidJSON(t *testing.T) {
+	authController, _ := newMockAuthController()
+
+	// Create request with invalid JSON body
+	reqBody := []byte(`{"username": "testuser", "password": }`)
+	req, err := http.NewRequest("POST", "/api/register", bytes.NewBuffer(reqBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Create ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(authController.RegisterHandler)
+
+	// Call the handler
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+
+	// Check the response body
+	expectedError := "invalid character '}' looking for beginning of value"
+	if !strings.Contains(rr.Body.String(), expectedError) {
+		t.Errorf("handler returned unexpected error: got %v, expected to contain %v", rr.Body.String(), expectedError)
+	}
 }
